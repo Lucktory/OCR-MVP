@@ -20,3 +20,16 @@ body {
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
+
+dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  margin: auto;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
