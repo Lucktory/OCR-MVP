@@ -49,3 +49,10 @@ export type AnalysisResult = {
   extracted: ExtractedInvoice | null;
   validations: Validations | null;
 };
+
+export type AnalysisRecord = {
+  id: string;
+  timestamp: number;
+  fileName: string;
+  result: AnalysisResult;
+};

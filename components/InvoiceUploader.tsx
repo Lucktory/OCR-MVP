@@ -19,7 +19,13 @@ type Status =
   | { kind: "result"; result: AnalysisResultType }
   | { kind: "error"; message: string };
 
-export default function InvoiceUploader() {
+type InvoiceUploaderProps = {
+  onAnalysisComplete?: (result: AnalysisResultType, fileName: string) => void;
+};
+
+export default function InvoiceUploader({
+  onAnalysisComplete,
+}: InvoiceUploaderProps = {}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<UploadedFile | null>(null);
@@ -96,7 +102,9 @@ export default function InvoiceUploader() {
         });
         return;
       }
-      setStatus({ kind: "result", result: json as AnalysisResultType });
+      const result = json as AnalysisResultType;
+      setStatus({ kind: "result", result });
+      onAnalysisComplete?.(result, uploaded.file.name);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Erro desconhecido";
       setStatus({ kind: "error", message });

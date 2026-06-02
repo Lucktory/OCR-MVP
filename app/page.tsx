@@ -1,14 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Header from "@/components/Header";
+import HistorySection from "@/components/HistorySection";
 import InvoiceSection from "@/components/InvoiceSection";
 import InvoiceUploader from "@/components/InvoiceUploader";
 import { generateRandomInvoice } from "@/lib/generator";
-import type { InvoiceData } from "@/lib/types";
+import type { AnalysisRecord, AnalysisResult, InvoiceData } from "@/lib/types";
+
+const HISTORY_MAX = 20;
 
 export default function Home() {
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
+  const [history, setHistory] = useState<AnalysisRecord[]>([]);
+
+  const handleAnalysisComplete = useCallback(
+    (result: AnalysisResult, fileName: string) => {
+      const record: AnalysisRecord = {
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        fileName,
+        result,
+      };
+      setHistory((prev) => [record, ...prev].slice(0, HISTORY_MAX));
+    },
+    [],
+  );
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -40,8 +57,15 @@ export default function Home() {
             invoice={invoice}
             onGenerate={() => setInvoice(generateRandomInvoice())}
           />
-          <InvoiceUploader />
+          <InvoiceUploader onAnalysisComplete={handleAnalysisComplete} />
         </div>
+
+        {history.length > 0 && (
+          <HistorySection
+            records={history}
+            onClear={() => setHistory([])}
+          />
+        )}
       </main>
     </div>
   );

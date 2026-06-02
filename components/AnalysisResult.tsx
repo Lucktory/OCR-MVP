@@ -4,16 +4,25 @@ import type { AnalysisResult as AnalysisResultType } from "@/lib/types";
 type Props = {
   result: AnalysisResultType;
   onReset: () => void;
+  resetLabel?: string;
 };
 
-export default function AnalysisResult({ result, onReset }: Props) {
+export default function AnalysisResult({
+  result,
+  onReset,
+  resetLabel,
+}: Props) {
   if (!result.is_invoice) {
-    return <NotInvoice result={result} onReset={onReset} />;
+    return (
+      <NotInvoice result={result} onReset={onReset} resetLabel={resetLabel} />
+    );
   }
-  return <InvoiceFound result={result} onReset={onReset} />;
+  return (
+    <InvoiceFound result={result} onReset={onReset} resetLabel={resetLabel} />
+  );
 }
 
-function InvoiceFound({ result, onReset }: Props) {
+function InvoiceFound({ result, onReset, resetLabel }: Props) {
   const ext = result.extracted!;
   const v = result.validations;
   return (
@@ -126,14 +135,14 @@ function InvoiceFound({ result, onReset }: Props) {
           onClick={onReset}
           className="rounded-lg border border-white/[0.12] bg-transparent px-3.5 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.06]"
         >
-          Analisar outra
+          {resetLabel ?? "Analisar outra"}
         </button>
       </div>
     </div>
   );
 }
 
-function NotInvoice({ result, onReset }: Props) {
+function NotInvoice({ result, onReset, resetLabel }: Props) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-8 text-center">
       <div
@@ -170,7 +179,7 @@ function NotInvoice({ result, onReset }: Props) {
         onClick={onReset}
         className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200"
       >
-        Tentar outra imagem
+        {resetLabel ?? "Tentar outra imagem"}
       </button>
     </div>
   );
