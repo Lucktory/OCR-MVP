@@ -120,15 +120,41 @@ export default function Home() {
       <Header />
 
       <main className="relative z-10 mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:px-8">
-        <section className="mb-12 max-w-3xl sm:mb-16">
-          <h1 className="text-4xl font-medium tracking-tight text-zinc-50 sm:text-5xl">
-            Notas fiscais,
-            <br />
-            <span className="text-zinc-400">decodificadas.</span>
-          </h1>
-          <p className="mt-5 max-w-xl font-mono text-sm text-zinc-500">
-            DANFE · NFC-e · NF-e
-          </p>
+        <section className="mb-12 sm:mb-16">
+          <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end lg:gap-16">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl font-medium tracking-tight text-zinc-50 sm:text-5xl">
+                Notas fiscais,
+                <br />
+                <span className="text-zinc-400">decodificadas.</span>
+              </h1>
+              <p className="mt-5 max-w-xl font-mono text-sm text-zinc-500">
+                DANFE · NFC-e · NF-e
+              </p>
+            </div>
+
+            <aside className="lg:w-72">
+              <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                Como usar
+              </p>
+              <ol className="space-y-3 text-sm leading-relaxed text-zinc-400">
+                <Step n="01">
+                  Crie uma nota fiscal de teste — ou envie sua imagem.
+                </Step>
+                <Step n="02">
+                  Clique em{" "}
+                  <span className="text-zinc-300">Analisar esta nota</span>{" "}
+                  para gerar, ou{" "}
+                  <span className="text-zinc-300">Analisar</span> para a imagem
+                  enviada.
+                </Step>
+                <Step n="03">
+                  Confira os campos extraídos, as validações e o histórico
+                  abaixo.
+                </Step>
+              </ol>
+            </aside>
+          </div>
         </section>
 
         <div className="grid gap-4 lg:grid-cols-2">
@@ -155,5 +181,16 @@ export default function Home() {
         )}
       </main>
     </div>
+  );
+}
+
+function Step({ n, children }: { n: string; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className="shrink-0 pt-0.5 font-mono text-xs text-zinc-600">
+        {n}
+      </span>
+      <span>{children}</span>
+    </li>
   );
 }
