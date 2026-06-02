@@ -4,18 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import AnalysisResult from "./AnalysisResult";
 import type { AnalysisResult as AnalysisResultType } from "@/lib/types";
 
-const ACCEPTED_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "application/pdf",
-];
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const MAX_SIZE_BYTES = 4 * 1024 * 1024;
 
 type UploadedFile = {
   file: File;
   previewUrl: string;
-  kind: "image" | "pdf";
+  kind: "image";
 };
 
 type Status =
@@ -44,11 +39,11 @@ export default function InvoiceUploader() {
     setStatus({ kind: "idle" });
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      setError("Formato não suportado.");
+      setError("Envie uma imagem PNG, JPG ou WEBP.");
       return;
     }
     if (file.size > MAX_SIZE_BYTES) {
-      setError("Arquivo maior que 10 MB.");
+      setError("Arquivo maior que 4 MB.");
       return;
     }
 
@@ -57,7 +52,7 @@ export default function InvoiceUploader() {
     setUploaded({
       file,
       previewUrl: URL.createObjectURL(file),
-      kind: file.type === "application/pdf" ? "pdf" : "image",
+      kind: "image",
     });
   }
 
@@ -233,7 +228,7 @@ function DropZone({
         </button>
       </div>
       <p className="font-mono text-[11px] text-zinc-600">
-        PNG · JPG · PDF — 10 MB
+        PNG · JPG · WEBP — 4 MB
       </p>
     </div>
   );
@@ -265,23 +260,12 @@ function UploadedPreview({
         </button>
       </div>
       <div className="flex flex-1 items-center justify-center p-4">
-        {uploaded.kind === "image" ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={uploaded.previewUrl}
-            alt=""
-            className="max-h-72 w-auto rounded-md object-contain shadow-2xl ring-1 ring-black/40"
-          />
-        ) : (
-          <a
-            href={uploaded.previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md border border-white/[0.12] bg-white/[0.02] px-4 py-3 text-sm text-zinc-100 transition hover:bg-white/[0.06]"
-          >
-            Abrir PDF
-          </a>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={uploaded.previewUrl}
+          alt=""
+          className="max-h-72 w-auto rounded-md object-contain shadow-2xl ring-1 ring-black/40"
+        />
       </div>
     </div>
   );
