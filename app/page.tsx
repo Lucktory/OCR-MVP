@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import Header from "@/components/Header";
-import InvoiceModal from "@/components/InvoiceModal";
 import InvoiceSection from "@/components/InvoiceSection";
 import InvoiceUploader from "@/components/InvoiceUploader";
+import { generateRandomInvoice } from "@/lib/generator";
 import type { InvoiceData } from "@/lib/types";
 
 export default function Home() {
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -39,21 +38,11 @@ export default function Home() {
         <div className="grid gap-4 lg:grid-cols-2">
           <InvoiceSection
             invoice={invoice}
-            onOpenModal={() => setModalOpen(true)}
+            onGenerate={() => setInvoice(generateRandomInvoice())}
           />
           <InvoiceUploader />
         </div>
       </main>
-
-      <InvoiceModal
-        open={modalOpen}
-        initialData={invoice}
-        onClose={() => setModalOpen(false)}
-        onSave={(data) => {
-          setInvoice(data);
-          setModalOpen(false);
-        }}
-      />
     </div>
   );
 }

@@ -7,10 +7,15 @@ export function formatCurrency(value: number): string {
   }).format(Number.isFinite(value) ? value : 0);
 }
 
-export function formatCNPJ(cnpj: string): string {
-  const digits = cnpj.replace(/\D/g, "");
-  if (digits.length !== 14) return cnpj;
-  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+export function formatCNPJ(value: string): string {
+  const d = value.replace(/\D/g, "");
+  if (d.length === 14) {
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12, 14)}`;
+  }
+  if (d.length === 11) {
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9, 11)}`;
+  }
+  return value;
 }
 
 export function formatDateBR(iso: string): string {
