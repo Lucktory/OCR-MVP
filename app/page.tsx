@@ -1,31 +1,110 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import HistorySection from "@/components/HistorySection";
 import InvoiceSection from "@/components/InvoiceSection";
 import InvoiceUploader from "@/components/InvoiceUploader";
 import { generateRandomInvoice } from "@/lib/generator";
-import type { AnalysisRecord, AnalysisResult, InvoiceData } from "@/lib/types";
+import type {
+  AnalysisRecord,
+  AnalysisResult,
+  InvoiceData,
+} from "@/lib/types";
 
 const HISTORY_MAX = 20;
+
+export type AnalysisStatus =
+  | { kind: "idle" }
+  | {
+      kind: "loading";
+      fileName: string;
+      previewUrl: string;
+      source: "upload" | "generator";
+    }
+  | {
+      kind: "result";
+      result: AnalysisResult;
+      fileName: string;
+      previewUrl: string;
+      source: "upload" | "generator";
+    }
+  | { kind: "error"; message: string };
 
 export default function Home() {
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
+  const [status, setStatus] = useState<AnalysisStatus>({ kind: "idle" });
+  const activePreviewUrlRef = useRef<string | null>(null);
 
-  const handleAnalysisComplete = useCallback(
-    (result: AnalysisResult, fileName: string) => {
-      const record: AnalysisRecord = {
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        fileName,
-        result,
-      };
-      setHistory((prev) => [record, ...prev].slice(0, HISTORY_MAX));
+  useEffect(() => {
+    return () => {
+      if (activePreviewUrlRef.current) {
+        URL.revokeObjectURL(activePreviewUrlRef.current);
+      }
+    };
+  }, []);
+
+  const runAnalysis = useCallback(
+    async (
+      file: File,
+      fileName: string,
+      previewUrl: string,
+      source: "upload" | "generator",
+    ) => {
+      if (activePreviewUrlRef.current && activePreviewUrlRef.current !== previewUrl) {
+        URL.revokeObjectURL(activePreviewUrlRef.current);
+      }
+      activePreviewUrlRef.current = previewUrl;
+
+      setStatus({ kind: "loading", fileName, previewUrl, source });
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/api/analyze", {
+          method: "POST",
+          body: formData,
+        });
+        const json = await response.json();
+        if (!response.ok) {
+          setStatus({
+            kind: "error",
+            message: json?.detail ?? `Erro ${response.status}`,
+          });
+          return;
+        }
+        const result = json as AnalysisResult;
+        setStatus({
+          kind: "result",
+          result,
+          fileName,
+          previewUrl,
+          source,
+        });
+        const record: AnalysisRecord = {
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          fileName,
+          result,
+        };
+        setHistory((prev) => [record, ...prev].slice(0, HISTORY_MAX));
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Erro desconhecido";
+        setStatus({ kind: "error", message });
+      }
     },
     [],
   );
+
+  const resetAnalysis = useCallback(() => {
+    if (activePreviewUrlRef.current) {
+      URL.revokeObjectURL(activePreviewUrlRef.current);
+      activePreviewUrlRef.current = null;
+    }
+    setStatus({ kind: "idle" });
+  }, []);
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -56,8 +135,16 @@ export default function Home() {
           <InvoiceSection
             invoice={invoice}
             onGenerate={() => setInvoice(generateRandomInvoice())}
+            onAnalyze={runAnalysis}
+            isAnalyzing={
+              status.kind === "loading" && status.source === "generator"
+            }
           />
-          <InvoiceUploader onAnalysisComplete={handleAnalysisComplete} />
+          <InvoiceUploader
+            status={status}
+            onAnalyze={runAnalysis}
+            onReset={resetAnalysis}
+          />
         </div>
 
         {history.length > 0 && (

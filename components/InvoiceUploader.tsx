@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import AnalysisResult from "./AnalysisResult";
+import ImageZoomDialog from "./ImageZoomDialog";
+import type { AnalysisStatus } from "@/app/page";
 import type { AnalysisResult as AnalysisResultType } from "@/lib/types";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -10,28 +12,26 @@ const MAX_SIZE_BYTES = 4 * 1024 * 1024;
 type UploadedFile = {
   file: File;
   previewUrl: string;
-  kind: "image";
 };
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "result"; result: AnalysisResultType }
-  | { kind: "error"; message: string };
-
-type InvoiceUploaderProps = {
-  onAnalysisComplete?: (result: AnalysisResultType, fileName: string) => void;
+type Props = {
+  status: AnalysisStatus;
+  onAnalyze: (
+    file: File,
+    fileName: string,
+    previewUrl: string,
+    source: "upload" | "generator",
+  ) => void;
+  onReset: () => void;
 };
 
-export default function InvoiceUploader({
-  onAnalysisComplete,
-}: InvoiceUploaderProps = {}) {
+export default function InvoiceUploader({ status, onAnalyze, onReset }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [uploaded, setUploaded] = useState<UploadedFile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -39,10 +39,18 @@ export default function InvoiceUploader({
     };
   }, [uploaded]);
 
+  useEffect(() => {
+    if (status.kind === "result" || status.kind === "loading") {
+      if (uploaded) {
+        URL.revokeObjectURL(uploaded.previewUrl);
+        setUploaded(null);
+      }
+    }
+  }, [status.kind, uploaded]);
+
   function handleFile(file: File | undefined | null) {
     if (!file) return;
     setError(null);
-    setStatus({ kind: "idle" });
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setError("Envie uma imagem PNG, JPG ou WEBP.");
@@ -58,22 +66,28 @@ export default function InvoiceUploader({
     setUploaded({
       file,
       previewUrl: URL.createObjectURL(file),
-      kind: "image",
     });
   }
 
-  function clearFile() {
+  function clearLocalFile() {
     if (uploaded) URL.revokeObjectURL(uploaded.previewUrl);
     setUploaded(null);
     setError(null);
-    setStatus({ kind: "idle" });
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
-  function resetResult() {
-    setStatus({ kind: "idle" });
-    clearFile();
+  function handleAnalyzeClick() {
+    if (!uploaded) return;
+    onAnalyze(uploaded.file, uploaded.file.name, uploaded.previewUrl, "upload");
+    setUploaded(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  }
+
+  function handleReset() {
+    clearLocalFile();
+    onReset();
   }
 
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
@@ -82,58 +96,11 @@ export default function InvoiceUploader({
     handleFile(e.dataTransfer.files?.[0]);
   }
 
-  async function analyze() {
-    if (!uploaded) return;
-    setStatus({ kind: "loading" });
-
-    const formData = new FormData();
-    formData.append("file", uploaded.file);
-
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
-      const json = await response.json();
-      if (!response.ok) {
-        setStatus({
-          kind: "error",
-          message: json?.detail ?? `Erro ${response.status}`,
-        });
-        return;
-      }
-      const result = json as AnalysisResultType;
-      setStatus({ kind: "result", result });
-      onAnalysisComplete?.(result, uploaded.file.name);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Erro desconhecido";
-      setStatus({ kind: "error", message });
-    }
-  }
+  const body = renderBody();
 
   return (
     <div className="flex min-h-[460px] flex-col rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
-      {status.kind === "result" ? (
-        <AnalysisResult result={status.result} onReset={resetResult} />
-      ) : uploaded ? (
-        <UploadedPreview
-          uploaded={uploaded}
-          onClear={clearFile}
-          status={status}
-        />
-      ) : (
-        <DropZone
-          isDragging={isDragging}
-          onDrop={onDrop}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onPickFile={() => fileInputRef.current?.click()}
-          onTakePhoto={() => cameraInputRef.current?.click()}
-        />
-      )}
+      {body}
 
       <input
         ref={fileInputRef}
@@ -152,25 +119,82 @@ export default function InvoiceUploader({
       />
 
       {error && <p className="mt-3 text-xs text-orange-300">{error}</p>}
-      {status.kind === "error" && (
-        <p className="mt-3 text-xs text-orange-300">{status.message}</p>
-      )}
 
-      {status.kind !== "result" && (
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={analyze}
-            disabled={!uploaded || status.kind === "loading"}
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-white/[0.08] disabled:text-zinc-600 disabled:shadow-none"
-          >
-            {status.kind === "loading" && <Spinner />}
-            {status.kind === "loading" ? "Analisando…" : "Analisar"}
-          </button>
-        </div>
+      {zoomOpen && (
+        <ImageZoomDialog
+          title={
+            status.kind === "result" || status.kind === "loading"
+              ? status.fileName
+              : uploaded?.file.name
+          }
+          onClose={() => setZoomOpen(false)}
+        >
+          <ZoomedImage
+            url={
+              status.kind === "result" || status.kind === "loading"
+                ? status.previewUrl
+                : (uploaded?.previewUrl ?? "")
+            }
+          />
+        </ImageZoomDialog>
       )}
     </div>
   );
+
+  function renderBody() {
+    if (status.kind === "loading") {
+      return (
+        <LoadingView
+          fileName={status.fileName}
+          previewUrl={status.previewUrl}
+          onZoom={() => setZoomOpen(true)}
+        />
+      );
+    }
+
+    if (status.kind === "result") {
+      return (
+        <ResultView
+          result={status.result}
+          fileName={status.fileName}
+          previewUrl={status.previewUrl}
+          onZoom={() => setZoomOpen(true)}
+          onReset={handleReset}
+        />
+      );
+    }
+
+    if (status.kind === "error") {
+      return (
+        <ErrorView message={status.message} onReset={handleReset} />
+      );
+    }
+
+    if (uploaded) {
+      return (
+        <UploadedPreview
+          uploaded={uploaded}
+          onClear={clearLocalFile}
+          onAnalyze={handleAnalyzeClick}
+          onZoom={() => setZoomOpen(true)}
+        />
+      );
+    }
+
+    return (
+      <DropZone
+        isDragging={isDragging}
+        onDrop={onDrop}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onPickFile={() => fileInputRef.current?.click()}
+        onTakePhoto={() => cameraInputRef.current?.click()}
+      />
+    );
+  }
 }
 
 function DropZone({
@@ -245,13 +269,14 @@ function DropZone({
 function UploadedPreview({
   uploaded,
   onClear,
-  status,
+  onAnalyze,
+  onZoom,
 }: {
   uploaded: UploadedFile;
   onClear: () => void;
-  status: Status;
+  onAnalyze: () => void;
+  onZoom: () => void;
 }) {
-  const loading = status.kind === "loading";
   return (
     <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-white/[0.08] bg-black/40">
       <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-2">
@@ -261,28 +286,171 @@ function UploadedPreview({
         <button
           type="button"
           onClick={onClear}
-          disabled={loading}
-          className="rounded-md px-2 py-0.5 text-xs text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md px-2 py-0.5 text-xs text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-50"
         >
           Remover
         </button>
       </div>
-      <div className="flex flex-1 items-center justify-center p-4">
+      <button
+        type="button"
+        onClick={onZoom}
+        aria-label="Ampliar imagem"
+        className="group flex flex-1 cursor-zoom-in items-center justify-center p-4"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={uploaded.previewUrl}
           alt=""
-          className="max-h-72 w-auto rounded-md object-contain shadow-2xl ring-1 ring-black/40"
+          className="max-h-72 w-auto rounded-md object-contain shadow-2xl ring-1 ring-black/40 transition group-hover:ring-orange-400/30"
         />
+      </button>
+      <div className="flex justify-end p-3">
+        <button
+          type="button"
+          onClick={onAnalyze}
+          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200"
+        >
+          Analisar
+        </button>
       </div>
     </div>
+  );
+}
+
+function LoadingView({
+  fileName,
+  previewUrl,
+  onZoom,
+}: {
+  fileName: string;
+  previewUrl: string;
+  onZoom: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-white/[0.08] bg-black/40">
+      <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-2">
+        <p className="truncate font-mono text-xs text-zinc-400">{fileName}</p>
+        <Spinner />
+      </div>
+      <button
+        type="button"
+        onClick={onZoom}
+        aria-label="Ampliar imagem"
+        className="group flex flex-1 cursor-zoom-in items-center justify-center p-4"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={previewUrl}
+          alt=""
+          className="max-h-72 w-auto rounded-md object-contain opacity-70 shadow-2xl ring-1 ring-black/40 transition group-hover:opacity-100"
+        />
+      </button>
+      <div className="border-t border-white/[0.08] px-3 py-2.5">
+        <p className="text-center text-xs text-zinc-400">Analisando…</p>
+      </div>
+    </div>
+  );
+}
+
+function ResultView({
+  result,
+  fileName,
+  previewUrl,
+  onZoom,
+  onReset,
+}: {
+  result: AnalysisResultType;
+  fileName: string;
+  previewUrl: string;
+  onZoom: () => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-3">
+      <div className="flex items-center gap-3 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2">
+        <button
+          type="button"
+          onClick={onZoom}
+          aria-label="Ampliar imagem analisada"
+          className="group shrink-0 cursor-zoom-in overflow-hidden rounded-md ring-1 ring-white/[0.08] transition hover:ring-orange-400/30"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt=""
+            className="h-12 w-12 object-cover"
+          />
+        </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-mono text-xs text-zinc-400">{fileName}</p>
+          <p className="text-[10px] text-zinc-500">Clique para ampliar</p>
+        </div>
+      </div>
+      <div className="flex-1">
+        <AnalysisResult result={result} onReset={onReset} />
+      </div>
+    </div>
+  );
+}
+
+function ErrorView({
+  message,
+  onReset,
+}: {
+  message: string;
+  onReset: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center">
+      <div
+        aria-hidden
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-rose-400/30 bg-rose-400/[0.08] text-rose-300"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-base font-medium text-zinc-50">Erro na análise</p>
+        <p className="mt-1.5 max-w-xs text-sm text-zinc-400">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onReset}
+        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  );
+}
+
+function ZoomedImage({ url }: { url: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      className="max-h-full max-w-full object-contain shadow-2xl ring-1 ring-black/40"
+    />
   );
 }
 
 function Spinner() {
   return (
     <svg
-      className="h-3.5 w-3.5 animate-spin"
+      className="h-3.5 w-3.5 animate-spin text-zinc-400"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
