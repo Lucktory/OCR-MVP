@@ -96,16 +96,16 @@ export default function InvoiceModal({
       onClick={handleBackdropClick}
       className="w-full max-w-5xl rounded-xl"
     >
-      <div className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-          <h2 className="text-sm font-medium text-slate-900">
+      <div className="flex max-h-[90vh] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-950 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-3">
+          <h2 className="text-sm font-medium tracking-tight text-zinc-50">
             Criar nota fiscal
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-md p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-md p-1 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-50"
           >
             <svg
               viewBox="0 0 24 24"
@@ -124,8 +124,8 @@ export default function InvoiceModal({
         </div>
 
         <div className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-2">
-          <div className="overflow-y-auto border-b border-slate-200 px-5 py-5 md:border-b-0 md:border-r">
-            <div className="space-y-5">
+          <div className="overflow-y-auto border-b border-white/[0.08] px-5 py-5 md:border-b-0 md:border-r">
+            <div className="space-y-6">
               <Group label="Emitente">
                 <TextField
                   label="Razão social"
@@ -205,7 +205,7 @@ export default function InvoiceModal({
                   <button
                     type="button"
                     onClick={addItem}
-                    className="text-xs font-medium text-slate-600 transition hover:text-slate-900"
+                    className="rounded-md px-2 py-0.5 text-xs font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-50"
                   >
                     + Adicionar
                   </button>
@@ -215,55 +215,51 @@ export default function InvoiceModal({
                   {data.itens.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="rounded-md border border-slate-200 p-3"
+                      className="rounded-lg border border-white/[0.08] bg-white/[0.02] p-3"
                     >
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs text-slate-500">
-                          {idx + 1}.
+                        <span className="font-mono text-xs text-zinc-500">
+                          {String(idx + 1).padStart(2, "0")}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          className="text-xs text-slate-400 transition hover:text-rose-600"
+                          className="text-xs text-zinc-500 transition hover:text-orange-300"
                         >
                           Remover
                         </button>
                       </div>
                       <div className="space-y-2">
-                        <input
-                          type="text"
+                        <ModalInput
                           value={item.descricao}
-                          onChange={(e) =>
-                            updateItem(item.id, { descricao: e.target.value })
+                          onChange={(v) =>
+                            updateItem(item.id, { descricao: v })
                           }
                           placeholder="Descrição"
-                          className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
                         />
                         <div className="grid grid-cols-2 gap-2">
-                          <input
+                          <ModalInput
                             type="number"
-                            min={0}
-                            value={item.quantidade}
-                            onChange={(e) =>
+                            value={String(item.quantidade)}
+                            onChange={(v) =>
                               updateItem(item.id, {
-                                quantidade: Number(e.target.value) || 0,
+                                quantidade: Number(v) || 0,
                               })
                             }
                             placeholder="Qtd."
-                            className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 font-mono text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                            mono
                           />
-                          <input
+                          <ModalInput
                             type="number"
-                            min={0}
                             step={0.01}
-                            value={item.valorUnitario}
-                            onChange={(e) =>
+                            value={String(item.valorUnitario)}
+                            onChange={(v) =>
                               updateItem(item.id, {
-                                valorUnitario: Number(e.target.value) || 0,
+                                valorUnitario: Number(v) || 0,
                               })
                             }
                             placeholder="Valor unit."
-                            className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 font-mono text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                            mono
                           />
                         </div>
                       </div>
@@ -274,27 +270,29 @@ export default function InvoiceModal({
             </div>
           </div>
 
-          <div className="overflow-y-auto bg-slate-50 px-5 py-5">
-            <DanfePreview data={data} />
+          <div className="overflow-y-auto bg-zinc-900/40 px-5 py-5">
+            <div className="overflow-hidden rounded-lg shadow-2xl ring-1 ring-black/40">
+              <DanfePreview data={data} />
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-3">
-          <span className="font-mono text-sm text-slate-700">
-            Total {formatCurrency(total)}
+        <div className="flex items-center justify-between gap-3 border-t border-white/[0.08] px-5 py-3">
+          <span className="font-mono text-sm text-zinc-300">
+            {formatCurrency(total)}
           </span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-lg border border-white/[0.12] bg-transparent px-3.5 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.06]"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={() => onSave(data)}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="rounded-lg bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200"
             >
               Salvar
             </button>
@@ -317,7 +315,7 @@ function Group({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="text-xs font-medium text-zinc-500">{label}</p>
         {action}
       </div>
       <div className="space-y-2.5">{children}</div>
@@ -340,13 +338,40 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-slate-600">{label}</span>
-      <input
+      <span className="mb-1 block text-xs text-zinc-500">{label}</span>
+      <ModalInput
         type={type}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 ${mono ? "font-mono" : ""}`}
+        onChange={onChange}
+        mono={mono}
       />
     </label>
+  );
+}
+
+function ModalInput({
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  step,
+  mono = false,
+}: {
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  step?: number;
+  mono?: boolean;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      step={step}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 text-sm text-zinc-50 outline-none transition placeholder:text-zinc-600 focus:border-orange-400/40 focus:ring-2 focus:ring-orange-400/15 ${mono ? "font-mono" : ""}`}
+    />
   );
 }

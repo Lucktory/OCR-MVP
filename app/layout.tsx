@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NF·OCR — Extração de Nota Fiscal",
-  description:
-    "Demo de extração estruturada de dados de nota fiscal brasileira via visão computacional.",
+  title: "NF-OCR",
+  description: "Extração estruturada de dados de nota fiscal brasileira.",
 };
 
 export default function RootLayout({
@@ -28,9 +27,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        {children}
-      </body>
+      <body className="min-h-full bg-zinc-950 text-zinc-50">{children}</body>
     </html>
   );
 }

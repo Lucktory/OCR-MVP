@@ -66,7 +66,7 @@ export default function InvoiceUploader() {
   }
 
   return (
-    <div className="flex min-h-[420px] flex-col rounded-xl border border-slate-200 bg-white p-4">
+    <div className="flex min-h-[460px] flex-col rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
       {uploaded ? (
         <UploadedPreview uploaded={uploaded} onClear={clearFile} />
       ) : (
@@ -77,32 +77,54 @@ export default function InvoiceUploader() {
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
-          className={`flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-12 text-center transition ${
+          className={`flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-14 text-center transition ${
             isDragging
-              ? "border-slate-400 bg-slate-50"
-              : "border-slate-200 bg-slate-50/30"
+              ? "border-orange-400/40 bg-orange-400/[0.04]"
+              : "border-white/[0.12] bg-white/[0.01]"
           }`}
         >
-          <p className="text-sm text-slate-600">
-            Arraste o arquivo aqui ou
-          </p>
+          <div
+            aria-hidden
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-zinc-400"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+
+          <p className="text-sm text-zinc-400">Arraste o arquivo aqui</p>
+
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="rounded-lg bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200"
             >
               Selecionar
             </button>
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-lg border border-white/[0.12] bg-white/[0.02] px-3.5 py-1.5 text-sm font-medium text-zinc-50 transition hover:bg-white/[0.06]"
             >
               Tirar foto
             </button>
           </div>
-          <p className="text-xs text-slate-400">PNG · JPG · PDF · até 10 MB</p>
+
+          <p className="font-mono text-[11px] text-zinc-600">
+            PNG · JPG · PDF — 10 MB
+          </p>
         </div>
       )}
 
@@ -123,14 +145,14 @@ export default function InvoiceUploader() {
       />
 
       {error && (
-        <p className="mt-3 text-xs text-rose-600">{error}</p>
+        <p className="mt-3 text-xs text-orange-300">{error}</p>
       )}
 
       <div className="mt-4 flex justify-end">
         <button
           type="button"
           disabled={!uploaded}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-white/[0.08] disabled:text-zinc-600 disabled:shadow-none"
         >
           Analisar
         </button>
@@ -147,31 +169,33 @@ function UploadedPreview({
   onClear: () => void;
 }) {
   return (
-    <div className="flex-1 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
-        <p className="truncate text-xs text-slate-700">{uploaded.file.name}</p>
+    <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-white/[0.08] bg-black/40">
+      <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-2">
+        <p className="truncate font-mono text-xs text-zinc-400">
+          {uploaded.file.name}
+        </p>
         <button
           type="button"
           onClick={onClear}
-          className="rounded-md px-2 py-0.5 text-xs text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          className="rounded-md px-2 py-0.5 text-xs text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-50"
         >
           Remover
         </button>
       </div>
-      <div className="flex h-full items-center justify-center p-4">
+      <div className="flex flex-1 items-center justify-center p-4">
         {uploaded.kind === "image" ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={uploaded.previewUrl}
             alt=""
-            className="max-h-72 w-auto rounded-md border border-slate-200 bg-white object-contain"
+            className="max-h-72 w-auto rounded-md object-contain shadow-2xl ring-1 ring-black/40"
           />
         ) : (
           <a
             href={uploaded.previewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-50"
+            className="rounded-md border border-white/[0.12] bg-white/[0.02] px-4 py-3 text-sm text-zinc-100 transition hover:bg-white/[0.06]"
           >
             Abrir PDF
           </a>

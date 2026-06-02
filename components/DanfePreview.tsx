@@ -18,7 +18,7 @@ export default function DanfePreview({ data }: DanfePreviewProps) {
   return (
     <div
       id="danfe-preview"
-      className="rounded-lg border border-slate-300 bg-white text-[11px] text-slate-900"
+      className="bg-white text-[11px] text-slate-900"
     >
       <div className="flex items-stretch border-b border-slate-300">
         <div className="flex w-1/3 flex-col items-center justify-center border-r border-slate-300 p-3">
