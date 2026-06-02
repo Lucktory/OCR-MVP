@@ -9,7 +9,7 @@ type Props = {
   onGenerate: () => void;
 };
 
-const DANFE_NATURAL_WIDTH = 760;
+const DANFE_NATURAL_WIDTH = 820;
 
 export default function InvoiceSection({ invoice, onGenerate }: Props) {
   if (!invoice) {

@@ -122,7 +122,7 @@ export default function DanfePreview({ data }: DanfePreviewProps) {
   return (
     <div
       id="danfe-preview"
-      className="w-[760px] bg-white font-sans text-[10px] leading-tight text-slate-900"
+      className="w-[820px] bg-white px-7 py-8 font-sans text-[10px] leading-tight text-slate-900"
     >
       {/* RECEBEMOS strip */}
       <div className="border border-b-0 border-slate-700 px-2 py-1 text-[8.5px]">
